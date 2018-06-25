@@ -22,7 +22,7 @@ from __future__ import print_function
 import os
 import tensorflow as tf
 
-IMAGE_SIZE = 448
+IMAGE_SIZE = 232
 
 # Global constants describing the Diabetic Retinopath Detection data set.
 NUM_CLASSES = 5
@@ -60,8 +60,8 @@ def read_svhn(filename_queue):
     # Dimensions of the images in the SVHN dataset.
     # See http://ufldl.stanford.edu/housenumbers/ for a description of the
     # input format.
-    result.height = 512
-    result.width = 512
+    result.height = 256
+    result.width = 256
     result.depth = 3
 
     reader = tf.TFRecordReader()
