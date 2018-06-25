@@ -1,0 +1,38 @@
+To run this script on GPU the followng parser arguments needs to be configured. 
+
+in training file:
+--train_dir
+--pre_trained_dir
+--max_steps
+
+in drd file:
+--data_dir
+--batch_size
+
+Global parameters:
+
+# Constants describing the training process. (usually do not have to be changed)
+MOVING_AVERAGE_DECAY = 0.9999     # The decay to use for the moving average.
+NUM_EPOCHS_PER_DECAY = 350.0      # Epochs after which learning rate decays.
+LEARNING_RATE_DECAY_FACTOR = 0.1  # Learning rate decay factor.
+INITIAL_LEARNING_RATE = 0.1       # Initial learning rate.
+
+in drd_input file:
+
+Global parameters (:set to what makes sense)
+NUM_CLASSES = 5
+NUM_EXAMPLES_PER_EPOCH_FOR_TRAIN = 50000 # was set from # 50000
+NUM_EXAMPLES_PER_EPOCH_FOR_EVAL = 3500
+CAPACITY = 2000 #number of elements to queue
+
+Here one needs to configure the validation data set path. Currently there is not argparse argument specifying this path
+
+drd_eval
+
+--eval_dir', type=str, default = './output/_2Block_drd_eval', help = """Directory where to write event logs.""")
+
+--eval_data', type = str, default='test', help = """Either 'test' or 'train_eval'.""")
+
+--checkpoint_dir', type=str, default= './output/resnet_2BLock_drd_train', help= """Directory where to read model checkpoints.""")
+
+'--num_examples',type=int, default=100, help="""Number of examples to run."""
