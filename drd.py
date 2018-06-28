@@ -49,16 +49,19 @@ sys.dont_write_bytecode = True
 parser = argparse.ArgumentParser()
 
 # Basic model parameters.
-parser.add_argument('--batch_size', type=int, default=1,
+parser.add_argument('--batch_size', type=int, default=2,
                     help='Number of images to process in a batch.')
 
 parser.add_argument('--use_fp16', type=bool, default=False,
                     help='Train the model using fp16.')
 # Basic model parameters.
 parser.add_argument('--data_dir', type=str,
+                    default='/home/olle/PycharmProjects/Diabetic_Retinopathy_Detection/data/balanced',
+                    help='directory where training data is stored')
+# Basic model parameters.
+parser.add_argument('--validation_dir', type=str,
                     default='/home/olle/PycharmProjects/Diabetic_Retinopathy_Detection/data/validation',
-                    help='Number of images to process in a batch.')
-
+                    help='directory where training data is stored')
 FLAGS = parser.parse_args()
 # Global constants describing the digits-10 data set.
 IMAGE_SIZE = drd_input.IMAGE_SIZE
@@ -175,7 +178,7 @@ def inputs(eval_data):
       ValueError: If no data_dir
     """
     images, labels, names = drd_input.inputs(eval_data=eval_data,
-                                       batch_size=FLAGS.batch_size, data_dir = FLAGS.data_dir)
+                                       batch_size=FLAGS.batch_size, data_dir = FLAGS.validation_dir)
     if FLAGS.use_fp16:
         images = tf.cast(images, tf.float16)
         labels = tf.cast(labels, tf.float16)
@@ -334,7 +337,7 @@ def inference_2Blocks(images):
     return(rm.resnet_v1_2Blocks(images, num_classes=5, scope="resnet_v1_2Blocks"))
 
 def resnet_v1_50(images):
-    return(rm.resnet_v1_4Blocks(images, num_classes=5, scope="resnet_v1_50"))
+    return(rm.resnet_v1_4Blocks(images, num_classes=5, scope="resnet_v1_50", reuse=tf.AUTO_REUSE))
 
 def inference_alex_net(images):
     """Build the CIFAR-10 model.

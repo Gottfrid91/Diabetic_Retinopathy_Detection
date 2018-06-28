@@ -225,7 +225,7 @@ def resnet_v1(inputs,
           end_points['predictions'] = slim.softmax(net, scope='predictions')
         return net #, end_points
 
-resnet_v1.default_image_size = 224
+resnet_v1.default_image_size = 448
 
 
 def resnet_v1_block(scope, base_depth, num_units, stride):

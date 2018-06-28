@@ -22,13 +22,13 @@ from __future__ import print_function
 import os
 import tensorflow as tf
 
-IMAGE_SIZE = 232
+IMAGE_SIZE = 448
 
 # Global constants describing the Diabetic Retinopath Detection data set.
 NUM_CLASSES = 5
-NUM_EXAMPLES_PER_EPOCH_FOR_TRAIN = 50000 # was set from # 50000
+NUM_EXAMPLES_PER_EPOCH_FOR_TRAIN = 500 # was set from # 50000
 NUM_EXAMPLES_PER_EPOCH_FOR_EVAL = 3500
-CAPACITY = 2000 #number of elements to queue
+CAPACITY = 200 #number of elements to queue
 
 def read_svhn(filename_queue):
     """Reads and parses examples from SVHN data files.
@@ -60,8 +60,8 @@ def read_svhn(filename_queue):
     # Dimensions of the images in the SVHN dataset.
     # See http://ufldl.stanford.edu/housenumbers/ for a description of the
     # input format.
-    result.height = 256
-    result.width = 256
+    result.height = 512
+    result.width = 512
     result.depth = 3
 
     reader = tf.TFRecordReader()
@@ -138,8 +138,8 @@ def distorted_inputs(data_dir, batch_size):
       images: Images. 4D tensor of [batch_size, IMAGE_SIZE, IMAGE_SIZE, 3] size.
       labels: Labels. 1D tensor of [batch_size] size.
     """
-    filenames = [os.path.join(data_dir, 'data_validation_batch.bin')]
-
+    filenames = [os.path.join(data_dir, 'data_batch_%d.bin' % i)
+                 for i in xrange(0, len(os.listdir(data_dir))-1)]
     for f in filenames:
         if not tf.gfile.Exists(f):
             raise ValueError('Failed to find file: ' + f)
@@ -199,13 +199,13 @@ def inputs(eval_data, batch_size, data_dir):
     """
     if not eval_data:
         filenames = [os.path.join(data_dir, 'data_batch_%d.bin' % i)
-                     for i in xrange(0, 7)]
+                     for i in xrange(0, len(os.listdir(data_dir)))]
         for f in filenames:
             if not tf.gfile.Exists(f):
                 raise ValueError('Failed to find file: ' + f)
         num_examples_per_epoch = NUM_EXAMPLES_PER_EPOCH_FOR_TRAIN
     else:
-        filenames = [os.path.join(data_dir + '/validation/', 'data_batch_0.bin')]
+        filenames = [os.path.join(data_dir , 'data_batch_0.bin')]
         num_examples_per_epoch = NUM_EXAMPLES_PER_EPOCH_FOR_EVAL
 
     # Create a queue that produces the filenames to read.

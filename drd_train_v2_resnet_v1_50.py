@@ -35,10 +35,10 @@ sys.dont_write_bytecode = True
 
 parser = drd.parser
 
-parser.add_argument('--train_dir', type=str, default='./output/vgg_16',
+parser.add_argument('--save_dir', type=str, default='./output/resnet_v1_50',
                     help='Directory where to write event logs and checkpoint.')
 
-parser.add_argument('--pre_trained_dir', type=str, default='./output/pre_weights',
+parser.add_argument('--pre_trained_dir', type=str, default='./output/pre_weights/resnet_v1_50.ckpt',
                     help='Directory where to write event logs and checkpoint.')
 
 parser.add_argument('--max_steps', type=int, default=2000000,
@@ -57,18 +57,27 @@ def train():
 
         # Get images and labels for CIFAR-10.
         images, labels, names = drd.distorted_inputs()
+        #get validation data
+        val_images, val_labels = drd.inputs(True)
 
         # Build a Graph that computes the logits predictions from the
         # inference model.
         #logits1= drd.inference(images, FLAGS.n_residual_blocks)
         logits = drd.resnet_v1_50(images)
+        val_logits = drd.resnet_v1_50(val_images)
 
         # calculate predictions
         predictions = tf.cast(tf.argmax(logits, axis=1), tf.int32)
+        val_predictions = tf.cast(tf.argmax(val_logits, axis=1), tf.int32)
+
 
         # ops for batch accuracy calcultion
         correct_prediction = tf.equal(predictions, labels)
+        val_correct_prediction = tf.equal(val_predictions, labels)
+
         batch_accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
+        val_batch_accuracy = tf.reduce_mean(tf.cast(val_correct_prediction, tf.float32))
+
 
         # calculate training accuracy
         # Calculate loss.
@@ -98,13 +107,13 @@ def train():
         # Start the queue runners.
         tf.train.start_queue_runners(sess=sess)
 
-        summary_writer = tf.summary.FileWriter(FLAGS.train_dir, sess.graph)
+        summary_writer = tf.summary.FileWriter(FLAGS.save_dir, sess.graph)
 
         step_start = 0
         try:
             ####Trying to find last checkpoint file fore full final model exist###
             print("Trying to restore last checkpoint ...")
-            save_dir = FLAGS.train_dir
+            save_dir = FLAGS.save_dir
             # Use TensorFlow to find the latest checkpoint - if any.
             last_chk_path = tf.train.latest_checkpoint(checkpoint_dir=save_dir)
             # Try and load the data in the checkpoint.
@@ -116,33 +125,15 @@ def train():
             step_start = int(
                 filter(str.isdigit, unicodedata.normalize('NFKD', last_chk_path).encode('ascii', 'ignore')))
 
+
         except:
-            try:
-                #if first time model is being trained, load in pre-trained weights to subnetwork named pre_retina_30###
-                print("Trying to load pretrained weights for network, init other random")
-                meta_dir = '/home/olle/PycharmProjects/transfer_learning/vgg_16_oxford_net/output/pre_weights/resnet_v1_50' \
-                           '.ckpt '
-
-                saver_pre.restore(sess, meta_dir)
-                print("Model restored.")
-
-                uninitialized_vars = []
-                for var in tf.global_variables():
-                    try:
-                        sess.run(var)
-                    except tf.errors.FailedPreconditionError:
-                        print('found one not initialized')
-                        uninitialized_vars.append(var)
-                # create init op for the still unitilized variables
-                init_new_vars_op = tf.variables_initializer(uninitialized_vars)
-                sess.run(init_new_vars_op)
-            except:
-                # If all the above failed for some reason, simply
-                # initialize all the variables for the TensorFlow graph.
-                print("Failed to restore any checkpoints. Initializing variables instead.")
-                sess.run(init)
+            # If all the above failed for some reason, simply
+            # initialize all the variables for the TensorFlow graph.
+            print("Failed to restore any checkpoints. Initializing variables instead.")
+            sess.run(init)
 
         accuracy_dev = []
+        val_accuracy_dev = []
         for step in xrange(step_start, FLAGS.max_steps):
             start_time = time.time()
             _, loss_value, accuracy = sess.run([train_op, loss, batch_accuracy])
@@ -156,8 +147,11 @@ def train():
 
             if step % 10 == 0:
 
-                im_id = sess.run([names])
+                im_id, val_acc = sess.run([names, val_batch_accuracy])
+
+                val_accuracy_dev.append(val_acc)
                 print("the image being trained on is {}".format(im_id))
+                print("The average validation accuracy is: {}".format(np.mean(val_accuracy_dev)))
                 num_examples_per_step = FLAGS.batch_size
                 examples_per_sec = num_examples_per_step / duration
                 sec_per_batch = float(duration)
@@ -175,8 +169,8 @@ def train():
             # Save the model checkpoint periodically.
             if step % 100 == 0 or (step + 1) == FLAGS.max_steps:
                 #set paths and saving ops for the full and sub_network
-                checkpoint_path = os.path.join(FLAGS.train_dir, 'model.ckpt')
-                pre_trained_path = os.path.join(FLAGS.pre_trained_dir, 'model.ckpt')
+                checkpoint_path = os.path.join(FLAGS.save_dir, 'model.ckpt')
+                #pre_trained_path = os.path.join(FLAGS.pre_trained_dir, 'model.ckpt')
 
                 saver.save(sess, checkpoint_path, global_step=step)
                 #saver_30.save(sess, pre_trained_path, global_step=step)
