@@ -41,7 +41,7 @@ parser.add_argument('--save_dir', type=str, default='./output/inference_2Blocks'
 parser.add_argument('--pre_trained_dir', type=str, default='./output/pre_weights/inference_2Blocks',
                     help='Directory where to write event logs and checkpoint.')
 
-parser.add_argument('--max_steps', type=int, default=2000000,
+parser.add_argument('--max_steps', type=int, default=20000000,
                     help='Number of batches to run.')
 
 parser.add_argument('--log_device_placement', type=bool, default=False,
@@ -148,19 +148,17 @@ def train():
             if step % 10 == 0:
 
                 im_id, val_acc = sess.run([names, val_batch_accuracy])
-
                 val_accuracy_dev.append(val_acc)
-                print("the image being trained on is {}".format(im_id))
-                print("The average validation accuracy is: {}".format(np.mean(val_accuracy_dev)))
+
                 num_examples_per_step = FLAGS.batch_size
                 examples_per_sec = num_examples_per_step / duration
                 sec_per_batch = float(duration)
 
                 format_str = ('%s: step %d, loss = %.2f, avg_batch_accuracy = %.2f, (%.1f examples/sec; %.3f '
-                              'sec/batch)')
+                              'sec/batch), validation accuracy %.2f, image_name: %s')
                 # take averages of all the accuracies from the previous bathces
                 print(format_str % (datetime.now(), step, loss_value, np.mean(accuracy_dev),
-                                    examples_per_sec, sec_per_batch))
+                                    examples_per_sec, sec_per_batch, np.mean(val_accuracy_dev), im_id))
 
             if step % 100 == 0:
                 summary_str = sess.run(summary_op)
