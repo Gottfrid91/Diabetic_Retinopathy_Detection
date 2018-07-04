@@ -186,9 +186,9 @@ def inputs(eval_data):
 
 def oxford_net_C(images):
 
-    with tf.variable_scope('vgg_16'):
+    with tf.variable_scope('vgg_16', reuse=tf.AUTO_REUSE):
         layers = []
-        with tf.variable_scope('conv1'):
+        with tf.variable_scope('conv1', reuse=tf.AUTO_REUSE):
             conv0 = ox_n.conv_bn_relu_layer(images, [3, 3, 3, 64], 1, scope_name='conv1_1')
 
             ox_n.activation_summary(conv0)
@@ -282,6 +282,67 @@ def oxford_net_C(images):
             layers.append(output)
 
         return layers[-1]
+def shallow_oxford_net_C(images):
+
+    with tf.variable_scope('vgg_16', reuse=tf.AUTO_REUSE):
+        layers = []
+        with tf.variable_scope('conv1', reuse=tf.AUTO_REUSE):
+            conv0 = ox_n.conv_bn_relu_layer(images, [3, 3, 3, 64], 1, scope_name='conv1_1')
+
+            ox_n.activation_summary(conv0)
+            layers.append(conv0)
+
+            conv1 = ox_n.conv_bn_relu_layer(conv0, [3, 3, 64, 64], 1, scope_name='conv1_2')
+            ox_n.activation_summary(conv1)
+            layers.append(conv1)
+
+            max_1 = tf.nn.max_pool(conv1, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding= 'VALID', name='max_pool_1')
+            layers.append(max_1)
+
+        with tf.variable_scope('conv2'):
+            conv2 = ox_n.conv_bn_relu_layer(max_1, [3, 3, 64, 128], 1, scope_name='conv2_1')
+            ox_n.activation_summary(conv2)
+            layers.append(conv2)
+
+            conv3 = ox_n.conv_bn_relu_layer(conv2, [3, 3, 128, 128], 1, scope_name='conv2_2')
+            ox_n.activation_summary(conv3)
+            layers.append(conv3)
+
+            max_2 = tf.nn.max_pool(conv3, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding= 'VALID', name='max_pool_2')
+
+            layers.append(max_2)
+
+        with tf.variable_scope('conv3'):
+            conv3 = ox_n.conv_bn_relu_layer(max_2, [3, 3, 128, 256], 1, scope_name='conv3_1')
+            ox_n.activation_summary(conv3)
+            layers.append(conv3)
+
+            conv4 = ox_n.conv_bn_relu_layer(conv3, [3, 3, 256, 256], 1, scope_name='conv3_2')
+            ox_n.activation_summary(conv4)
+            layers.append(conv4)
+
+            conv5 = ox_n.conv_bn_relu_layer(conv4, [3, 3, 256, 256], 1, scope_name='conv3_3')
+            ox_n.activation_summary(conv5)
+            layers.append(conv5)
+
+            max_3 = tf.nn.max_pool(conv5, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='VALID', name='max_pool_3')
+
+            layers.append(max_3)
+
+        with tf.variable_scope('fc6'):
+            in_channel = layers[-1].get_shape().as_list()[-1]
+            bn_layer = ox_n.batch_normalization_layer(layers[-1], in_channel, scope_name='fc')
+            relu_layer = tf.nn.relu(bn_layer)
+            global_pool = tf.reduce_mean(relu_layer, [1, 2]) # avergage pooling
+
+            fc1 = ox_n.output_layer(global_pool, 412, scope_name='fc1')
+            layers.append(fc1)
+        with tf.variable_scope('fc8'):
+            output = ox_n.output_layer(fc1, 5, scope_name='output')
+
+            layers.append(output)
+
+        return layers[-1]
 
 def resnet_custom(input_tensor_batch, n, reuse=False):
     '''
@@ -334,7 +395,7 @@ def resnet_custom(input_tensor_batch, n, reuse=False):
     return layers[-1]
 
 def inference_2Blocks(images):
-    return(rm.resnet_v1_2Blocks(images, num_classes=5, scope="resnet_v1_2Blocks"))
+    return(rm.resnet_v1_2Blocks(images, num_classes=5, scope="resnet_v1_2Blocks", reuse=tf.AUTO_REUSE))
 
 def resnet_v1_50(images):
     return(rm.resnet_v1_4Blocks(images, num_classes=5, scope="resnet_v1_50", reuse=tf.AUTO_REUSE))

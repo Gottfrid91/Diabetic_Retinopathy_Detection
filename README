@@ -36,3 +36,12 @@ drd_eval
 --checkpoint_dir', type=str, default= './output/resnet_2BLock_drd_train', help= """Directory where to read model checkpoints.""")
 
 '--num_examples',type=int, default=100, help="""Number of examples to run."""
+
+CLASS IMBLANACE IS:
+array([0.73478335, 0.06954962, 0.15065764, 0.02485338, 0.02015601],
+
+
+server info:
+
+data dir : '/localscratch/ophthalmology/kaggle/train/'
+
